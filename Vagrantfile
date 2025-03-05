@@ -23,12 +23,12 @@ Vagrant.configure("2") do |config|
   # within the machine from a port on the host machine. In the example below,
   # accessing "localhost:8080" will access port 80 on the guest machine.
   # NOTE: This will enable public access to the opened port
-   config.vm.network "forwarded_port", guest: 22, host: 2222
+   config.vm.network "forwarded_port", guest: 3306, host: 3306
 
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine and only allow access
   # via 127.0.0.1 to disable public access
-  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+   config.vm.network "forwarded_port", guest: 80, host: 8080
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -66,12 +66,39 @@ Vagrant.configure("2") do |config|
   #
   # View the documentation for the provider you are using for more
   # information on available options.
+config.vm.define "web" do |web|
+	web.vm.box = "nginx"
+  web.vm.network "forwarded_port", guest: 80, host: 8080
+
+  config.vm.provision "shelli", inline: <<-SHELLI
+    sudo apt update
+    sudo apt install mariadb-server -y
+    sudo systemctl enable mariadb
+    sudo systemctl start mariadb.service
+  SHELLI
+end
+	end
+	
+config.vm.define "db" do |db|
+  db.vm.network "forwarded_port", guest: 3306, host: 3306
+	db.vm.box = "mariadb"
+
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo apt update && sudo apt install -y nginx php-fpm php-mysql && sudo apt install -y php8.3-fpm
+    php --version
+  SHELL
+end
+	end
+     
 
   # Enable provisioning with a shell script. Additional provisioners such as
   # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
   # documentation for more information about their specific syntax and use.
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   apt-get update
-  #   apt-get install -y apache2
+  #config.vm.provision "shell", inline: <<-SHELL
+  #   sudo apt update
+  #   sudo apt install mariadb-server -y
+  #   sudo systemctl enable mariadb
+  #   sudo systemctl start mariadb.service
   # SHELL
-end
+#end
+
